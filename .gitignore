@@ -32,3 +32,19 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore Terraform lock files
+.terraform.lock.hcl
+
+# Ignore Terraform directory
+.terraform/
+
+# Ignore Terraform state
+terraform.tfstate
+
+# macOS filesystem files
+.DS_Store
+
+.idea/
+
+target/
