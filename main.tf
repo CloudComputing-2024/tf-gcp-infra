@@ -1,30 +1,19 @@
-resource "google_compute_network" "vpc_network" {
-  name                            = var.vpc_name
-  project                         = var.project_id
-  auto_create_subnetworks         = false
-  routing_mode                    = "REGIONAL"
-  delete_default_routes_on_create = true
+module "vpc1" {
+  source     = "./vpc-module"
+  project_id = var.project_id
+  region     = var.region
+  vpc_name = "vpc-1"
+  webapp_subnet_name = "webapp-1"
+  db_subnet_name = "db-1"
+  vpc_route_name = "route-to-internet-1"
 }
 
-resource "google_compute_subnetwork" "webapp_subnet" {
-  name          = var.webapp_subnet_name
-  ip_cidr_range = var.webapp_subnet_cidr
-  region        = var.region
-  network       = google_compute_network.vpc_network.id
+module "vpc2" {
+  source     = "./vpc-module"
+  project_id = var.project_id
+  region     = var.region
+  vpc_name = "vpc-2"
+  webapp_subnet_name = "webapp-2"
+  db_subnet_name = "db-2"
+  vpc_route_name = "route-to-internet-2"
 }
-
-resource "google_compute_subnetwork" "db_subnet" {
-  name          = var.db_subnet_name
-  ip_cidr_range = var.db_subnet_cidr
-  region        = var.region
-  network       = google_compute_network.vpc_network.id
-}
-
-resource "google_compute_route" "webapp_route" {
-  name             = var.webapp_route_name
-  dest_range       = var.webapp_route_dest_range
-  network          = google_compute_network.vpc_network.id
-  next_hop_gateway = "default-internet-gateway"
-  priority         = var.webapp_route_priority
-}
-
