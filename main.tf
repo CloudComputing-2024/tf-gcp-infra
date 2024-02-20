@@ -26,4 +26,3 @@ resource "google_compute_route" "default_route_to_internet" {
   network          = google_compute_network.vpc_network.id
   next_hop_gateway = "default-internet-gateway"
   priority         = var.vpc_route_priority
-}
