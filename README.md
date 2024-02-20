@@ -10,3 +10,4 @@
     - There are 2 subnets in the VPC, the first one named `webapp` and the second one named `db`.
     - Each subnet has a /24 CIDR address range.
     - Add a route explicitly to `0.0.0.0/0` with the next hop to the Internet Gateway and attach it to your VPC.
+    - test
