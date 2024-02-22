@@ -10,3 +10,14 @@
     - There are 2 subnets in the VPC, the first one named `webapp` and the second one named `db`.
     - Each subnet has a /24 CIDR address range.
     - Add a route explicitly to `0.0.0.0/0` with the next hop to the Internet Gateway and attach it to your VPC.
+   
+3. **Set up firewall rules:**
+   - Set up firewall rules for custom VPC/Subnet to allow traffic from internet to the port 8080 where the app listen
+   - Do not allow SSH port 22 form the Internet
+
+4. **Create an compute engine instance:**
+   - Launch instance in custom VPC
+   - Launch with custom image
+   - Set Boot disk type to balanced
+   - Set Boot size(GB): 100
+   
