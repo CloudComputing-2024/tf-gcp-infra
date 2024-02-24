@@ -29,15 +29,28 @@ resource "google_compute_route" "default_route_to_internet" {
 }
 
 resource "google_compute_firewall" "allow_traffic" {
-  name    = var.firewall_name
+  name    = var.allow_traffic_name
   network = google_compute_network.vpc_network.id
 
   allow {
-    protocol = var.protocol_name
-    ports    = var.application_port
+    protocol = var.allow_traffic_protocol
+    ports    = var.allow_traffic_ports
   }
-  source_ranges = var.firewall_source_ranges
-  target_tags   = var.firewall_tags
+  source_ranges = var.allow_traffic_source_ranges
+  target_tags   = var.allow_traffic_tags
+  priority      = var.allow_traffic_priority
+}
+
+resource "google_compute_firewall" "disallow_ssh" {
+  name    = var.disallow_ssh_name
+  network = google_compute_network.vpc_network.name
+
+  deny {
+    protocol = var.disallow_ssh_protocol
+    ports    = var.disallow_ssh_ports
+  }
+
+  source_ranges = var.disallow_ssh_source_ranges
 }
 
 resource "google_compute_instance" "vm_instance" {
@@ -60,5 +73,9 @@ resource "google_compute_instance" "vm_instance" {
     access_config {}
   }
 
-  tags = [var.firewall_name]
+  tags = [var.allow_traffic_name, var.disallow_ssh_name]
+
+  metadata = {
+    ssh-keys = "centos8:${file(var.ssh_public_key_path)}"
+  }
 }

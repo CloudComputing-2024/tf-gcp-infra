@@ -14,22 +14,52 @@ variable "routing_mode" {
   type = string
 }
 
-variable "firewall_name" {
+variable "allow_traffic_name" {
   type = string
 }
 
-variable "protocol_name" {
+variable "allow_traffic_protocol" {
   type = string
 }
 
-variable "application_port" {
+variable "allow_traffic_ports" {
   type    = list(string)
   default = ["8080"]
 }
 
-variable "firewall_source_ranges" {
+variable "allow_traffic_source_ranges" {
   type    = list(string)
   default = ["0.0.0.0/0"]
+}
+
+variable "allow_traffic_tags" {
+  type = list(string)
+}
+
+variable "allow_traffic_priority" {
+  type = string
+}
+
+variable "disallow_ssh_name" {
+  type = string
+}
+
+variable "disallow_ssh_protocol" {
+  type = string
+}
+
+variable "disallow_ssh_ports" {
+  type    = list(string)
+  default = ["22"]
+}
+
+variable "disallow_ssh_source_ranges" {
+  type    = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable "disallow_ssh_tags" {
+  type = list(string)
 }
 
 variable "webapp_subnet_name" {
@@ -64,10 +94,6 @@ variable "vpc_route_dest_range" {
   default = "0.0.0.0/0"
 }
 
-variable "firewall_tags" {
-  type = list(string)
-}
-
 variable "next_hop_gateway" {
   type = string
 }
@@ -94,5 +120,10 @@ variable "boot_disk_type" {
 
 variable "boot_disk_size" {
   type = number
+}
+
+variable "ssh_public_key_path" {
+  type = string
+  default = "~/.ssh/id_rsa.pub"
 }
 
