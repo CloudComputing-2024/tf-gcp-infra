@@ -76,10 +76,10 @@ resource "google_compute_instance" "vm_instance" {
 
   tags = [var.allow_traffic_name, var.disallow_ssh_name]
 
-#
-#  metadata = {
-#    ssh-keys = "centos8:${file(var.ssh_public_key_path)}"
-#  }
+  #
+  #  metadata = {
+  #    ssh-keys = "centos8:${file(var.ssh_public_key_path)}"
+  #  }
   service_account {
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     email  = "packer@dev-project-415121.iam.gserviceaccount.com"
@@ -160,6 +160,6 @@ resource "google_sql_user" "webapp_user" {
   name     = "webapp"
   instance = google_sql_database_instance.instance.name
   password = random_password.password.result
-#  password = "123"
+  #  password = "123"
 }
 
