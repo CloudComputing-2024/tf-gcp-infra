@@ -127,3 +127,102 @@ variable "ssh_public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }
 
+variable "service_account" {
+  type = string
+}
+
+variable "service_account_scope" {
+  type = list(string)
+}
+
+variable "private_ip_address_name" {
+  type = string
+}
+
+variable "private_ip_address_purpose" {
+  type = string
+}
+
+variable "private_ip_address_address_type" {
+  type = string
+}
+
+variable "private_ip_address_prefix_length" {
+  type = number
+}
+
+variable "private_vpc_connection_service" {
+  type = string
+}
+
+
+variable "db_name_suffix_byte_length" {
+  type = number
+}
+
+variable "cloud_sql_instance_region" {
+  type = string
+}
+
+variable "cloud_sql_instance_database_version" {
+  type = string
+}
+
+variable "cloud_sql_instance_deletion_protection" {
+  type    = bool
+  default = false
+}
+
+variable "cloud_sql_instance_tier" {
+  type = string
+}
+
+variable "cloud_sql_instance_disk_type" {
+  type = string
+}
+
+variable "cloud_sql_instance_disk_size" {
+  type = number
+}
+
+variable "cloud_sql_instance_ipv4_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "cloud_sql_instance_enable_private_path_for_google_cloud_services" {
+  type    = bool
+  default = true
+}
+
+variable "cloud_sql_instance_binary_log_enabled" {
+  type    = bool
+  default = true
+}
+
+variable "cloud_sql_instance_backup_configuration_enabled" {
+  type    = bool
+  default = true
+}
+
+variable "cloud_sql_instance_availability_type" {
+  type = string
+}
+
+variable "cloud_sql_database_name" {
+  type = string
+}
+
+variable "random_password_length" {
+  type = number
+}
+
+variable "cloud_sql_user_name" {
+  type = string
+}
+
+
+
+
+
+
