@@ -115,7 +115,6 @@ resource "random_id" "db_name_suffix" {
 }
 
 resource "google_sql_database_instance" "cloud_sql_instance" {
-  provider            = google-beta
   project             = var.project_id
   name                = "private-cloud-sql-instance-${random_id.db_name_suffix.hex}"
   region              = var.cloud_sql_instance_region
