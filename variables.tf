@@ -127,12 +127,24 @@ variable "ssh_public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }
 
-variable "service_account" {
+variable "service_account_id" {
+  type = string
+}
+
+variable "service_account_display_name" {
   type = string
 }
 
 variable "service_account_scope" {
   type = list(string)
+}
+
+variable "logging_admin_role" {
+  type = string
+}
+
+variable "monitoring_metric_writer_role" {
+  type = string
 }
 
 variable "private_ip_address_name" {
@@ -221,8 +233,20 @@ variable "cloud_sql_user_name" {
   type = string
 }
 
+variable "cloud_dns_zone_name" {
+  type = string
+}
 
+variable "cloud_dns_A_record_type" {
+  type = string
+}
 
+variable "cloud_dns_A_record_ttl" {
+  type = number
+}
 
+variable "cloud_dns_A_record_rrdatas" {
+  type = list(string)
+}
 
 

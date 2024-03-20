@@ -29,6 +29,17 @@
    - `name`: webapp
    - `instance`: Reference to the CloudSQL instance
    - `password`: Randomly generated password
+   - 
+7. **Create a Service Account:**
+   - `name`: csye6225
+   - creates a project level IAM binding for Logging admin role
+   - creates a project level IAM binding for Monitoring metrics writer role
+   - assigns the service account to the compute instance
+8. **Update Cloud DNS zone:**
+   - `name`: Add or Update A record to the Cloud DNS zone so that your domain points to your VM instance and your web application is accessible at http://your-domain-name.tld:<port>/.
+   - Your application must be accessible using root context i.e. http://your-domain-name.tld:<port>/ and not http://your-domain-name.tld:<port>/app-0.1/.
+
+
 
 ## Compute Engine Instance Setup
 Launch a Compute Engine instance with a startup script that configures the web application's database connection using the CloudSQL instance details.
