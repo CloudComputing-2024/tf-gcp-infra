@@ -54,6 +54,29 @@ resource "google_compute_firewall" "disallow_ssh" {
   source_ranges = var.disallow_ssh_source_ranges
 }
 
+resource "google_service_account" "service_account" {
+  account_id   = var.service_account_id
+  display_name = var.service_account_display_name
+}
+
+resource "google_project_iam_binding" "logging_admin" {
+  project = var.project_id
+  role    = var.logging_admin_role
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
+resource "google_project_iam_binding" "monitoring_metric_writer" {
+  project = var.project_id
+  role    = var.monitoring_metric_writer_role
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
+resource "google_project_iam_binding" "cloud_sql_client" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
 resource "google_compute_instance" "vm_instance" {
   machine_type = var.machine_type
   name         = var.instance_name
@@ -77,11 +100,12 @@ resource "google_compute_instance" "vm_instance" {
   tags = [var.allow_traffic_name, var.disallow_ssh_name]
 
   service_account {
-    email  = var.service_account
+    email  = google_service_account.service_account.email
     scopes = var.service_account_scope
   }
 
-  metadata_startup_script = <<-EOT
+  allow_stopping_for_update = true
+  metadata_startup_script   = <<-EOT
     #!/bin/bash
     set -e
 
@@ -157,3 +181,14 @@ resource "google_sql_user" "cloud_sql_user" {
   password = random_password.random_password.result
 }
 
+data "google_dns_managed_zone" "cloud_dns_zone" {
+  name = var.cloud_dns_zone_name
+}
+
+resource "google_dns_record_set" "cloud_dns_A_record" {
+  name         = data.google_dns_managed_zone.cloud_dns_zone.dns_name
+  type         = var.cloud_dns_A_record_type
+  ttl          = var.cloud_dns_A_record_ttl
+  managed_zone = data.google_dns_managed_zone.cloud_dns_zone.name
+  rrdatas      = [google_compute_instance.vm_instance.network_interface[0].access_config[0].nat_ip]
+}
