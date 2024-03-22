@@ -147,6 +147,10 @@ variable "monitoring_metric_writer_role" {
   type = string
 }
 
+variable "cloud_sql_role" {
+  type = string
+}
+
 variable "private_ip_address_name" {
   type = string
 }

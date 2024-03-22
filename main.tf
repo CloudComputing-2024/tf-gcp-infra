@@ -73,7 +73,7 @@ resource "google_project_iam_binding" "monitoring_metric_writer" {
 
 resource "google_project_iam_binding" "cloud_sql_client" {
   project = var.project_id
-  role    = "roles/cloudsql.client"
+  role    = var.cloud_sql_role
   members = ["serviceAccount:${google_service_account.service_account.email}"]
 }
 
