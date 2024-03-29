@@ -46,7 +46,7 @@ resource "google_compute_firewall" "disallow_ssh" {
   name    = var.disallow_ssh_name
   network = google_compute_network.vpc_network.name
 
-  deny {
+  allow {
     protocol = var.disallow_ssh_protocol
     ports    = var.disallow_ssh_ports
   }
@@ -191,4 +191,120 @@ resource "google_dns_record_set" "cloud_dns_A_record" {
   ttl          = var.cloud_dns_A_record_ttl
   managed_zone = data.google_dns_managed_zone.cloud_dns_zone.name
   rrdatas      = [google_compute_instance.vm_instance.network_interface[0].access_config[0].nat_ip]
+}
+
+resource "google_pubsub_topic" "verify_email_topic" {
+  name                       = "verify_email"
+  message_retention_duration = "604800s"
+}
+
+resource "google_pubsub_subscription" "verify_email_subscription" {
+  name  = "verify_email_subscription"
+  topic = google_pubsub_topic.verify_email_topic.name
+}
+
+resource "google_service_account" "cloud_function_service_account" {
+  account_id   = "cloud-function-service-account"
+  display_name = "Cloud Function Service Account"
+}
+
+resource "google_project_iam_binding" "pubsub_token_creator" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  members = [
+    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
+  ]
+}
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
+resource "google_project_iam_binding" "pubsub_token_creator_default_account" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  members = [
+    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com",
+  ]
+}
+
+resource "google_project_iam_binding" "pubsub_publisher" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  members = [
+    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+
+resource "google_cloudfunctions_function_iam_binding" "cloud_function_viwer" {
+  project        = var.project_id
+  cloud_function = google_cloudfunctions_function.cloud_function_send_email_verification.name
+  role           = "roles/viewer"
+  members = [
+    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
+  ]
+}
+
+resource "google_pubsub_subscription_iam_binding" "pubsub_subscription_editor" {
+  subscription = google_pubsub_subscription.verify_email_subscription.name
+  role         = "roles/editor"
+  members = [
+    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+
+resource "google_pubsub_topic_iam_binding" "pubsub_topic_viewer" {
+  project = var.project_id
+  topic   = google_pubsub_topic.verify_email_topic.name
+  role    = "roles/viewer"
+  members = [
+    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+
+resource "google_cloudfunctions_function" "cloud_function_send_email_verification" {
+  name        = "verification_function"
+  description = "Email verification function"
+  runtime     = "nodejs20"
+
+  available_memory_mb   = 8192
+  source_archive_bucket = google_storage_bucket.function_bucket.name
+  source_archive_object = google_storage_bucket_object.function_archive.name
+  entry_point           = "sendVerificationEmail"
+
+  vpc_connector = google_vpc_access_connector.vpc_connector.id
+
+  service_account_email = google_service_account.cloud_function_service_account.email
+
+  event_trigger {
+    event_type = "google.pubsub.topic.publish"
+    resource   = google_pubsub_topic.verify_email_topic.name
+  }
+
+  environment_variables = {
+    DB_HOST     = google_sql_database_instance.cloud_sql_instance.private_ip_address
+    DB_USER     = google_sql_user.cloud_sql_user.name
+    DB_PASSWORD = google_sql_user.cloud_sql_user.password
+    DB_NAME     = google_sql_database.cloud_sql_database.name
+  }
+}
+
+resource "google_storage_bucket" "function_bucket" {
+  name     = "send-verification-email-bucket"
+  location = "US"
+}
+
+resource "google_storage_bucket_object" "function_archive" {
+  name   = "function-source.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = "function-source.zip"
+}
+
+resource "google_vpc_access_connector" "vpc_connector" {
+  name          = "my-vpc-connector"
+  region        = "us-west1"
+  network       = google_compute_network.vpc_network.id
+  ip_cidr_range = "10.8.0.0/28"
 }
