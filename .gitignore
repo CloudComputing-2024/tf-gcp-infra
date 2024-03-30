@@ -48,3 +48,5 @@ terraform.tfstate
 .idea/
 
 target/
+
+*.zip
