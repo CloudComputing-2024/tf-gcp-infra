@@ -310,7 +310,8 @@ resource "google_cloudfunctions2_function" "cloud_function_send_email_verificati
   }
 
 }
-resource "terraform_data" "cloud_function_zip" {
+
+resource "null_resource" "cloud_function_zip" {
   provisioner "local-exec" {
     command = <<EOT
       git clone git@github.com:CloudComputing-2024/serverless.git || true
