@@ -253,4 +253,137 @@ variable "cloud_dns_A_record_rrdatas" {
   type = list(string)
 }
 
+variable "verify_email_topic_name" {
+  type = string
+}
 
+variable "verify_email_topic_message_retention_duration" {
+  type = string
+}
+
+variable "verify_email_subscription_name" {
+  type = string
+}
+
+variable "cloud_function_service_account_account_id" {
+  type = string
+}
+
+variable "cloud_function_service_account_display_name" {
+  type = string
+}
+
+variable "pubsub_token_creator_role" {
+  type = string
+}
+
+variable "pubsub_publisher_role" {
+  type = string
+}
+
+variable "cloud_function_invoker_role" {
+  type = string
+}
+
+variable "pubsub_subscription_editor_role" {
+  type = string
+}
+
+variable "pubsub_topic_viewer_role" {
+  type = string
+}
+
+variable "event_receiving_role" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_location" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_name" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_max_instance_count" {
+  type = number
+}
+
+
+variable "cloud_function_send_email_verification_min_instance_count" {
+  type = number
+}
+
+variable "cloud_function_send_email_verification_available_memory" {
+  type = string
+}
+
+
+variable "cloud_function_send_email_verification_timeout_seconds" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_runtime" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_max_instance_request_concurrency" {
+  type = number
+}
+
+variable "cloud_function_send_email_verification_available_cpu" {
+  type = number
+}
+
+variable "cloud_function_send_email_verification_ingress_settings" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_all_traffic_on_latest_revision" {
+  type = bool
+}
+
+variable "cloud_function_send_email_verification_trigger_region" {
+  type = string
+}
+
+
+variable "cloud_function_send_email_verification_entry_point" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_event_trigger_event_type" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_retry_policy" {
+  type = string
+}
+
+variable "cloud_function_send_email_verification_api_key" {
+  type = string
+}
+
+variable "cloud_function_bucket_name" {
+  type = string
+}
+
+variable "cloud_function_bucket_location" {
+  type = string
+}
+
+variable "cloud_function_archive_name" {
+  type = string
+}
+
+variable "vpc_connector_name" {
+  type = string
+}
+
+variable "vpc_connector_region" {
+  type = string
+}
+
+variable "vpc_connector_ip_cidr_range" {
+  type = string
+}
