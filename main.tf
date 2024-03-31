@@ -50,7 +50,7 @@ resource "google_compute_firewall" "disallow_ssh" {
   name    = var.disallow_ssh_name
   network = google_compute_network.vpc_network.name
 
-  allow {
+  deny {
     protocol = var.disallow_ssh_protocol
     ports    = var.disallow_ssh_ports
   }
@@ -119,6 +119,8 @@ resource "google_compute_instance" "vm_instance" {
     sudo echo "spring.datasource.username=${google_sql_user.cloud_sql_user.name}" >> /opt/webapp/application.properties
     sudo echo "spring.sql.init.mode=always" >> /opt/webapp/application.properties
     sudo echo "spring.datasource.password=${google_sql_user.cloud_sql_user.password}" >> /opt/webapp/application.properties
+    sudo echo "GOOGLE_CLOUD_PROJECT=${var.project_id}" >> /opt/webapp/application.properties
+    sudo echo "PUBSUB_TOPIC=${google_pubsub_topic.verify_email_topic.name}" >> /opt/webapp/application.properties
 
     sudo chown -R csye6225:csye6225 /opt/webapp/application.properties
   EOT
@@ -229,22 +231,11 @@ resource "google_project_iam_binding" "pubsub_publisher" {
   ]
 }
 
-resource "google_pubsub_subscription_iam_binding" "pubsub_subscription_editor" {
-  subscription = google_pubsub_subscription.verify_email_subscription.name
-  role         = var.pubsub_subscription_editor_role
-  members = [
-    #    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
-    "serviceAccount:${google_service_account.service_account.email}",
-  ]
-}
-
-resource "google_pubsub_topic_iam_binding" "pubsub_topic_viewer" {
+resource "google_project_iam_binding" "pubsub_subscription_editor" {
   project = var.project_id
-  topic   = google_pubsub_topic.verify_email_topic.name
-  role    = var.pubsub_topic_viewer_role
+  role    = var.pubsub_subscription_editor_role
   members = [
     "serviceAccount:${google_service_account.cloud_function_service_account.email}",
-    "serviceAccount:${google_service_account.service_account.email}",
   ]
 }
 
@@ -256,15 +247,6 @@ resource "google_project_iam_binding" "invoking" {
     "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
   ]
   depends_on = [google_project_iam_binding.pubsub_publisher]
-}
-
-resource "google_project_iam_binding" "event_receiving" {
-  project = var.project_id
-  role    = var.event_receiving_role
-  members = [
-    "serviceAccount:${google_service_account.cloud_function_service_account.email}",
-  ]
-  depends_on = [google_project_iam_binding.invoking]
 }
 
 resource "google_cloudfunctions2_function" "cloud_function_send_email_verification" {
