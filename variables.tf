@@ -10,10 +10,22 @@ variable "vpc_name" {
   type = string
 }
 
+variable "vpc_network_auto_create_subnetworks_enabled" {
+  type = bool
+}
+
+variable "vpc_network_delete_default_routes_on_create_enabled" {
+  type = bool
+}
+
 variable "routing_mode" {
   type = string
 }
 
+variable "db_subnet_private_ip_google_access" {
+  type = bool
+}
+### firewall ###
 variable "allow_traffic_name" {
   type = string
 }
@@ -22,21 +34,51 @@ variable "allow_traffic_protocol" {
   type = string
 }
 
+variable "allow_traffic_direction" {
+  type = string
+}
+
 variable "allow_traffic_ports" {
-  type    = list(string)
-  default = ["8080"]
+  type = list(string)
 }
 
 variable "allow_traffic_source_ranges" {
-  type    = list(string)
-  default = ["0.0.0.0/0"]
+  type = list(string)
 }
 
-variable "allow_traffic_tags" {
+variable "allow_traffic_target_tags" {
   type = list(string)
 }
 
 variable "allow_traffic_priority" {
+  type = string
+}
+
+variable "allow_https_name" {
+  type = string
+}
+
+variable "allow_https_direction" {
+  type = string
+}
+
+variable "allow_https_priority" {
+  type = number
+}
+
+variable "allow_https_source_ranges" {
+  type = list(string)
+}
+
+variable "allow_https_target_tags" {
+  type = list(string)
+}
+
+variable "allow_https_ports" {
+  type = list(string)
+}
+
+variable "allow_https_protocol" {
   type = string
 }
 
@@ -98,18 +140,6 @@ variable "next_hop_gateway" {
   type = string
 }
 
-variable "instance_name" {
-  type = string
-}
-
-variable "machine_type" {
-  type = string
-}
-
-variable "instance_zone" {
-  type = string
-}
-
 variable "boot_disk_image" {
   type = string
 }
@@ -148,6 +178,22 @@ variable "monitoring_metric_writer_role" {
 }
 
 variable "cloud_sql_role" {
+  type = string
+}
+
+variable "load_balancer_admin" {
+  type = string
+}
+
+variable "network_admin" {
+  type = string
+}
+
+variable "security_admin" {
+  type = string
+}
+
+variable "instance_admin" {
   type = string
 }
 
@@ -241,15 +287,15 @@ variable "cloud_dns_zone_name" {
   type = string
 }
 
-variable "cloud_dns_A_record_type" {
+variable "cloud_dns_a_record_type" {
   type = string
 }
 
-variable "cloud_dns_A_record_ttl" {
+variable "cloud_dns_a_record_ttl" {
   type = number
 }
 
-variable "cloud_dns_A_record_rrdatas" {
+variable "cloud_dns_a_record_rrdatas" {
   type = list(string)
 }
 
@@ -364,9 +410,9 @@ variable "cloud_function_send_email_verification_api_key" {
   type = string
 }
 
-variable "cloud_function_bucket_name" {
-  type = string
-}
+#variable "cloud_function_bucket_name" {
+#  type = string
+#}
 
 variable "cloud_function_bucket_location" {
   type = string
@@ -386,4 +432,196 @@ variable "vpc_connector_region" {
 
 variable "vpc_connector_ip_cidr_range" {
   type = string
+}
+
+variable "instance_template_name" {
+  type = string
+}
+
+variable "instance_template_machine_type" {
+  type = string
+}
+
+variable "instance_template_boot_disk_image" {
+  type = string
+}
+
+variable "instance_template_auto_delete_enabled" {
+  type = bool
+}
+
+variable "instance_template_boot_enabled" {
+  type = bool
+}
+
+variable "instance_template_tags" {
+  type = list(string)
+}
+
+variable "healthcheck_name" {
+  type = string
+}
+
+variable "healthcheck_check_interval_sec" {
+  type = string
+}
+
+variable "healthcheck_timeout_sec" {
+  type = number
+}
+
+variable "healthcheck_healthy_threshold" {
+  type = number
+}
+
+variable "healthcheck_unhealthy_threshold" {
+  type = number
+}
+
+variable "healthcheck_request_path" {
+  type = string
+}
+
+variable "healthcheck_port" {
+  type = string
+}
+
+variable "healthcheck_log_config_enabled" {
+  type = bool
+}
+
+variable "autoscaler_name" {
+  type = string
+}
+
+variable "autoscaler_max_replicas" {
+  type = number
+}
+
+variable "autoscaler_min_replicas" {
+  type = number
+}
+
+variable "autoscaler_cooldown_period" {
+  type = number
+}
+
+variable "autoscaler_cpu_utilization_target" {
+  type = string
+}
+
+variable "autoscaler_max_scaled_in_replicas_percent" {
+  type = number
+}
+
+variable "autoscaler_time_window_sec" {
+  type = number
+}
+
+variable "autoscaler_instance_zone" {
+  type = string
+}
+
+variable "instance_group_manager_base_instance_name" {
+  type = string
+}
+
+variable "instance_group_manager_name" {
+  type = string
+}
+
+variable "instance_group_manager_region" {
+  type = string
+}
+
+variable "instance_group_distribution_policy_zones" {
+  type = list(string)
+}
+
+variable "instance_group_manager_distribution_policy_target_shape" {
+  type = string
+}
+
+variable "instance_group_manager_initial_delay_sec" {
+  type = string
+}
+
+variable "instance_group_manager_named_port_name" {
+  type = string
+}
+
+variable "instance_group_manager_named_port_port" {
+  type = string
+}
+
+variable "instance_group_manager_target_size" {
+  type = number
+}
+
+variable "webapp_ssl_cert_name" {
+  type = string
+}
+
+variable "webapp_ssl_cert_name_domains" {
+  type = list(string)
+}
+
+variable "gce_lb_http_name" {
+  type = string
+}
+
+variable "gce_lb_http_managed_ssl_certificate_domains" {
+  type = list(string)
+}
+
+variable "gce_lb_http_protocol" {
+  type = string
+}
+
+variable "gce_lb_http_port" {
+  type = number
+}
+
+variable "gce_lb_http_port_name" {
+  type = string
+}
+
+variable "gce_lb_http_timeout_sec" {
+  type = number
+}
+
+variable "gce_lb_http_health_check_request_path" {
+  type = string
+}
+
+variable "gce_lb_http_health_check_port" {
+  type = number
+}
+
+variable "gce_lb_http_sample_rate" {
+  type = number
+}
+
+variable "gce_lb_http_ssl_enabled" {
+  type = bool
+}
+
+variable "gce_lb_http_https_redirect_enabled" {
+  type = bool
+}
+
+variable "gce_lb_http_enable_cdn_enabled" {
+  type = bool
+}
+
+variable "gce_lb_http_log_config_enabled" {
+  type = bool
+}
+
+variable "gce_lb_http_iap_config_enabled" {
+  type = bool
+}
+
+variable "gce-lb-http_target_tags" {
+  type = list(string)
 }

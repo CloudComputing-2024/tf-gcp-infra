@@ -5,9 +5,9 @@ data "google_project" "project" {
 resource "google_compute_network" "vpc_network" {
   name                            = var.vpc_name
   project                         = var.project_id
-  auto_create_subnetworks         = false
+  auto_create_subnetworks         = var.vpc_network_auto_create_subnetworks_enabled
   routing_mode                    = var.routing_mode
-  delete_default_routes_on_create = true
+  delete_default_routes_on_create = var.vpc_network_delete_default_routes_on_create_enabled
 }
 
 resource "google_compute_subnetwork" "webapp_subnet" {
@@ -22,7 +22,7 @@ resource "google_compute_subnetwork" "db_subnet" {
   ip_cidr_range            = var.db_subnet_cidr
   region                   = var.region
   network                  = google_compute_network.vpc_network.id
-  private_ip_google_access = true
+  private_ip_google_access = var.db_subnet_private_ip_google_access
 }
 
 resource "google_compute_route" "default_route_to_internet" {
@@ -33,31 +33,49 @@ resource "google_compute_route" "default_route_to_internet" {
   priority         = var.vpc_route_priority
 }
 
+
+### firewall rules ###
 resource "google_compute_firewall" "allow_traffic" {
-  name    = var.allow_traffic_name
-  network = google_compute_network.vpc_network.id
+  name          = var.allow_traffic_name
+  direction     = var.allow_traffic_direction
+  network       = google_compute_network.vpc_network.id
+  priority      = var.allow_traffic_priority
+  source_ranges = var.allow_traffic_source_ranges
+  target_tags   = var.allow_traffic_target_tags
 
   allow {
-    protocol = var.allow_traffic_protocol
     ports    = var.allow_traffic_ports
+    protocol = var.allow_traffic_protocol
   }
-  source_ranges = var.allow_traffic_source_ranges
-  target_tags   = var.allow_traffic_tags
-  priority      = var.allow_traffic_priority
+}
+
+resource "google_compute_firewall" "allow_https" {
+  name          = var.allow_https_name
+  direction     = var.allow_https_direction
+  network       = google_compute_network.vpc_network.id
+  priority      = var.allow_https_priority
+  source_ranges = var.allow_https_source_ranges
+  target_tags   = var.allow_https_target_tags
+
+  allow {
+    ports    = var.allow_https_ports
+    protocol = var.allow_https_protocol
+  }
 }
 
 resource "google_compute_firewall" "disallow_ssh" {
-  name    = var.disallow_ssh_name
-  network = google_compute_network.vpc_network.name
+  name          = var.disallow_ssh_name
+  network       = google_compute_network.vpc_network.name
+  target_tags   = var.disallow_ssh_tags
+  source_ranges = var.disallow_ssh_source_ranges
 
-  deny {
+  allow {
     protocol = var.disallow_ssh_protocol
     ports    = var.disallow_ssh_ports
   }
-
-  source_ranges = var.disallow_ssh_source_ranges
 }
 
+### vm service account ###
 resource "google_service_account" "service_account" {
   account_id   = var.service_account_id
   display_name = var.service_account_display_name
@@ -81,51 +99,32 @@ resource "google_project_iam_binding" "cloud_sql_client" {
   members = ["serviceAccount:${google_service_account.service_account.email}"]
 }
 
-resource "google_compute_instance" "vm_instance" {
-  machine_type = var.machine_type
-  name         = var.instance_name
-  zone         = var.instance_zone
-
-  boot_disk {
-    initialize_params {
-      image = var.boot_disk_image
-      type  = var.boot_disk_type
-      size  = var.boot_disk_size
-    }
-  }
-
-  network_interface {
-    network    = google_compute_network.vpc_network.id
-    subnetwork = google_compute_subnetwork.webapp_subnet.id
-
-    access_config {}
-  }
-
-  tags = [var.allow_traffic_name, var.disallow_ssh_name]
-
-  service_account {
-    email  = google_service_account.service_account.email
-    scopes = var.service_account_scope
-  }
-
-  allow_stopping_for_update = true
-  metadata_startup_script   = <<-EOT
-    #!/bin/bash
-    set -e
-
-    # Appends the database configuration to application.properties
-    sudo echo "spring.datasource.url=jdbc:mysql://google/${google_sql_database.cloud_sql_database.name}?cloudSqlInstance=${google_sql_database_instance.cloud_sql_instance.connection_name}&socketFactory=com.google.cloud.sql.mysql.SocketFactory" > /opt/webapp/application.properties
-    sudo echo "spring.cloud.gcp.sql.database-name=${google_sql_database.cloud_sql_database.name}" >> /opt/webapp/application.properties
-    sudo echo "spring.datasource.username=${google_sql_user.cloud_sql_user.name}" >> /opt/webapp/application.properties
-    sudo echo "spring.sql.init.mode=always" >> /opt/webapp/application.properties
-    sudo echo "spring.datasource.password=${google_sql_user.cloud_sql_user.password}" >> /opt/webapp/application.properties
-    sudo echo "GOOGLE_CLOUD_PROJECT=${var.project_id}" >> /opt/webapp/application.properties
-    sudo echo "PUBSUB_TOPIC=${google_pubsub_topic.verify_email_topic.name}" >> /opt/webapp/application.properties
-
-    sudo chown -R csye6225:csye6225 /opt/webapp/application.properties
-  EOT
+resource "google_project_iam_binding" "load_balancer_admin" {
+  project = var.project_id
+  role    = var.load_balancer_admin
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
 }
 
+resource "google_project_iam_binding" "network_admin" {
+  project = var.project_id
+  role    = var.network_admin
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
+resource "google_project_iam_binding" "security_admin" {
+  project = var.project_id
+  role    = var.security_admin
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
+resource "google_project_iam_binding" "instance_admin" {
+  project = var.project_id
+  role    = var.instance_admin
+  members = ["serviceAccount:${google_service_account.service_account.email}"]
+}
+
+
+### cloud sql ###
 resource "google_compute_global_address" "private_ip_address" {
   name          = var.private_ip_address_name
   purpose       = var.private_ip_address_purpose
@@ -187,18 +186,22 @@ resource "google_sql_user" "cloud_sql_user" {
   password = random_password.random_password.result
 }
 
+
+### dns record ###
 data "google_dns_managed_zone" "cloud_dns_zone" {
   name = var.cloud_dns_zone_name
 }
 
-resource "google_dns_record_set" "cloud_dns_A_record" {
+resource "google_dns_record_set" "cloud_dns_a_record" {
   name         = data.google_dns_managed_zone.cloud_dns_zone.dns_name
-  type         = var.cloud_dns_A_record_type
-  ttl          = var.cloud_dns_A_record_ttl
+  type         = var.cloud_dns_a_record_type
+  ttl          = var.cloud_dns_a_record_ttl
   managed_zone = data.google_dns_managed_zone.cloud_dns_zone.name
-  rrdatas      = [google_compute_instance.vm_instance.network_interface[0].access_config[0].nat_ip]
+  rrdatas      = [module.gce-lb-http.external_ip]
 }
 
+
+### cloud function ###
 resource "google_pubsub_topic" "verify_email_topic" {
   name                       = var.verify_email_topic_name
   message_retention_duration = var.verify_email_topic_message_retention_duration
@@ -321,4 +324,166 @@ resource "google_vpc_access_connector" "vpc_connector" {
   region        = var.vpc_connector_region
   network       = google_compute_network.vpc_network.id
   ip_cidr_range = var.vpc_connector_ip_cidr_range
+}
+
+resource "google_compute_instance_template" "instance_template" {
+  name         = var.instance_template_name
+  machine_type = var.instance_template_machine_type
+
+  disk {
+    source_image = var.instance_template_boot_disk_image
+    auto_delete  = var.instance_template_auto_delete_enabled
+    boot         = var.instance_template_boot_enabled
+  }
+
+  network_interface {
+    network    = google_compute_network.vpc_network.id
+    subnetwork = google_compute_subnetwork.webapp_subnet.id
+    access_config {}
+  }
+
+  tags = var.instance_template_tags
+  service_account {
+    email  = google_service_account.service_account.email
+    scopes = var.service_account_scope
+  }
+
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    set -e
+
+    # Appends the database configuration to application.properties
+    sudo echo "spring.datasource.url=jdbc:mysql://google/${google_sql_database.cloud_sql_database.name}?cloudSqlInstance=${google_sql_database_instance.cloud_sql_instance.connection_name}&socketFactory=com.google.cloud.sql.mysql.SocketFactory" > /opt/webapp/application.properties
+    sudo echo "spring.cloud.gcp.sql.database-name=${google_sql_database.cloud_sql_database.name}" >> /opt/webapp/application.properties
+    sudo echo "spring.datasource.username=${google_sql_user.cloud_sql_user.name}" >> /opt/webapp/application.properties
+    sudo echo "spring.sql.init.mode=always" >> /opt/webapp/application.properties
+    sudo echo "spring.datasource.password=${google_sql_user.cloud_sql_user.password}" >> /opt/webapp/application.properties
+    sudo echo "GOOGLE_CLOUD_PROJECT=${var.project_id}" >> /opt/webapp/application.properties
+    sudo echo "PUBSUB_TOPIC=${google_pubsub_topic.verify_email_topic.name}" >> /opt/webapp/application.properties
+
+    sudo chown -R csye6225:csye6225 /opt/webapp/application.properties
+  EOT
+}
+
+
+### health check ###
+resource "google_compute_health_check" "healthcheck" {
+  name                = var.healthcheck_name
+  check_interval_sec  = var.healthcheck_check_interval_sec
+  timeout_sec         = var.healthcheck_timeout_sec
+  healthy_threshold   = var.healthcheck_healthy_threshold
+  unhealthy_threshold = var.healthcheck_unhealthy_threshold
+
+  http_health_check {
+    request_path = var.healthcheck_request_path
+    port         = var.healthcheck_port
+  }
+
+  log_config {
+    enable = var.healthcheck_log_config_enabled
+  }
+}
+
+### autoscaler ###
+resource "google_compute_autoscaler" "autoscaler" {
+  name   = var.autoscaler_name
+  zone   = var.autoscaler_instance_zone
+  target = google_compute_instance_group_manager.instance_group_manager.id
+
+  autoscaling_policy {
+    max_replicas    = var.autoscaler_max_replicas
+    min_replicas    = var.autoscaler_min_replicas
+    cooldown_period = var.autoscaler_cooldown_period
+
+    cpu_utilization {
+      target = var.autoscaler_cpu_utilization_target
+    }
+
+    scale_in_control {
+      max_scaled_in_replicas {
+        percent = var.autoscaler_max_scaled_in_replicas_percent
+      }
+      time_window_sec = var.autoscaler_time_window_sec
+    }
+  }
+}
+
+### instance group manager ###
+resource "google_compute_instance_group_manager" "instance_group_manager" {
+  name               = var.instance_group_manager_name
+  base_instance_name = var.instance_group_manager_base_instance_name
+
+  target_size = var.instance_group_manager_target_size
+  zone        = var.autoscaler_instance_zone
+
+  version {
+    instance_template = google_compute_instance_template.instance_template.id
+  }
+
+  named_port {
+    name = var.instance_group_manager_named_port_name
+    port = var.instance_group_manager_named_port_port
+  }
+
+  auto_healing_policies {
+    health_check      = google_compute_health_check.healthcheck.id
+    initial_delay_sec = var.instance_group_manager_initial_delay_sec
+  }
+}
+
+### ssl certificate ###
+resource "google_compute_managed_ssl_certificate" "webapp_ssl_cert" {
+  provider = google-beta
+  project  = var.project_id
+  name     = var.webapp_ssl_cert_name
+
+  managed {
+    domains = var.webapp_ssl_cert_name_domains
+  }
+}
+
+### load balancer ###
+module "gce-lb-http" {
+  source  = "terraform-google-modules/lb-http/google"
+  version = "~> 10.0"
+
+  name    = var.gce_lb_http_name
+  project = var.project_id
+
+  target_tags = var.gce-lb-http_target_tags
+
+  ssl                             = var.gce_lb_http_ssl_enabled
+  managed_ssl_certificate_domains = var.gce_lb_http_managed_ssl_certificate_domains
+  https_redirect                  = var.gce_lb_http_https_redirect_enabled
+
+  backends = {
+    default = {
+
+      protocol    = var.gce_lb_http_protocol
+      port        = var.gce_lb_http_port
+      port_name   = var.gce_lb_http_port_name
+      timeout_sec = var.gce_lb_http_timeout_sec
+      enable_cdn  = var.gce_lb_http_enable_cdn_enabled
+
+      health_check = {
+        request_path = var.gce_lb_http_health_check_request_path
+        port         = var.gce_lb_http_health_check_port
+      }
+
+      log_config = {
+        enable      = var.gce_lb_http_log_config_enabled
+        sample_rate = var.gce_lb_http_sample_rate
+      }
+
+      groups = [
+        {
+          group = google_compute_instance_group_manager.instance_group_manager.instance_group
+        }
+      ]
+
+      iap_config = {
+        enable = var.gce_lb_http_iap_config_enabled
+      }
+    }
+  }
 }
