@@ -444,8 +444,8 @@ resource "google_compute_managed_ssl_certificate" "webapp_ssl_cert" {
 
 ### load balancer ###
 module "gce-lb-http" {
-  source  = "terraform-google-modules/lb-http/google"
-  version = "~> 10.0"
+  source            = "GoogleCloudPlatform/lb-http/google"
+  version           = "~> 9.0"
 
   name    = var.gce_lb_http_name
   project = var.project_id
