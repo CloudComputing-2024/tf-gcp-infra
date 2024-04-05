@@ -10,3 +10,6 @@ output "db_subnet_id" {
   value = google_compute_subnetwork.db_subnet.id
 }
 
+output "load_balancer_ip" {
+  value = module.gce-lb-http.external_ip
+}
