@@ -69,7 +69,7 @@ resource "google_compute_firewall" "disallow_ssh" {
   target_tags   = var.disallow_ssh_tags
   source_ranges = var.disallow_ssh_source_ranges
 
-  allow {
+  deny {
     protocol = var.disallow_ssh_protocol
     ports    = var.disallow_ssh_ports
   }
@@ -356,7 +356,7 @@ resource "google_compute_instance_template" "instance_template" {
     sudo echo "spring.datasource.url=jdbc:mysql://google/${google_sql_database.cloud_sql_database.name}?cloudSqlInstance=${google_sql_database_instance.cloud_sql_instance.connection_name}&socketFactory=com.google.cloud.sql.mysql.SocketFactory" > /opt/webapp/application.properties
     sudo echo "spring.cloud.gcp.sql.database-name=${google_sql_database.cloud_sql_database.name}" >> /opt/webapp/application.properties
     sudo echo "spring.datasource.username=${google_sql_user.cloud_sql_user.name}" >> /opt/webapp/application.properties
-    sudo echo "spring.sql.init.mode=always" >> /opt/webapp/application.properties
+    sudo echo "spring.sql.init.mode=never" >> /opt/webapp/application.properties
     sudo echo "spring.datasource.password=${google_sql_user.cloud_sql_user.password}" >> /opt/webapp/application.properties
     sudo echo "GOOGLE_CLOUD_PROJECT=${var.project_id}" >> /opt/webapp/application.properties
     sudo echo "PUBSUB_TOPIC=${google_pubsub_topic.verify_email_topic.name}" >> /opt/webapp/application.properties
