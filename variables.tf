@@ -140,17 +140,17 @@ variable "next_hop_gateway" {
   type = string
 }
 
-variable "boot_disk_image" {
-  type = string
-}
-
-variable "boot_disk_type" {
-  type = string
-}
-
-variable "boot_disk_size" {
-  type = number
-}
+#variable "boot_disk_image" {
+#  type = string
+#}
+#
+#variable "boot_disk_type" {
+#  type = string
+#}
+#
+#variable "boot_disk_size" {
+#  type = number
+#}
 
 variable "ssh_public_key_path" {
   type    = string
@@ -624,4 +624,20 @@ variable "gce_lb_http_iap_config_enabled" {
 
 variable "gce-lb-http_target_tags" {
   type = list(string)
+}
+
+variable "key_ring_name" {
+  type = string
+}
+
+variable "vm_cmek_name" {
+  type = string
+}
+
+variable "cloud_sqk_cmek_name" {
+  type = string
+}
+
+variable "cloud_storage_bucket_cmek_name" {
+  type = string
 }
