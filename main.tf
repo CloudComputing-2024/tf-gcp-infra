@@ -276,7 +276,7 @@ resource "google_cloudfunctions2_function" "cloud_function_send_email_verificati
     timeout_seconds                  = var.cloud_function_send_email_verification_timeout_seconds
     max_instance_request_concurrency = var.cloud_function_send_email_verification_max_instance_request_concurrency
     available_cpu                    = var.cloud_function_send_email_verification_available_cpu
-    environment_variables            = {
+    environment_variables = {
       DB_HOST     = google_sql_database_instance.cloud_sql_instance.private_ip_address
       DB_USER     = google_sql_user.cloud_sql_user.name
       DB_PASSWORD = sensitive(google_sql_user.cloud_sql_user.password)
@@ -332,7 +332,7 @@ resource "google_vpc_access_connector" "vpc_connector" {
   ip_cidr_range = var.vpc_connector_ip_cidr_range
 }
 
-rtemplateesource "google_compute_instance_template" "instance_template" {
+resource "google_compute_instance_template" "instance_template" {
   name         = var.instance_template_name
   machine_type = var.instance_template_machine_type
 
@@ -549,8 +549,8 @@ resource "google_kms_crypto_key_iam_binding" "vm_key_iam_binding" {
 
   members = [
     "serviceAccount:${google_service_account.service_account.email}",
-#    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
-#    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
+    #    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
+    #    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
   ]
 }
 
@@ -585,7 +585,7 @@ resource "google_project_iam_binding" "cryptokey_encrypter_decrypter" {
   members = [
     "serviceAccount:${google_service_account.service_account.email}",
     "serviceAccount:service-${data.google_project.project.number}@compute-system.iam.gserviceaccount.com",
-#    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
-#    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
+    #    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
+    #    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
   ]
 }
