@@ -13,3 +13,11 @@ output "db_subnet_id" {
 output "load_balancer_ip" {
   value = module.gce-lb-http.external_ip
 }
+
+output "project_number" {
+  value = data.google_project.project.number
+}
+
+output "key_ring" {
+  value = google_kms_key_ring.key_ring
+}
