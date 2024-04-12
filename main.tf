@@ -33,7 +33,6 @@ resource "google_compute_route" "default_route_to_internet" {
   priority         = var.vpc_route_priority
 }
 
-
 ### firewall rules ###
 resource "google_compute_firewall" "allow_traffic" {
   name          = var.allow_traffic_name
@@ -276,7 +275,6 @@ resource "google_sql_user" "cloud_sql_user" {
   password = random_password.random_password.result
 }
 
-
 ### dns record ###
 data "google_dns_managed_zone" "cloud_dns_zone" {
   name = var.cloud_dns_zone_name
@@ -289,7 +287,6 @@ resource "google_dns_record_set" "cloud_dns_a_record" {
   managed_zone = data.google_dns_managed_zone.cloud_dns_zone.name
   rrdatas      = [module.gce-lb-http.external_ip]
 }
-
 
 ### cloud function ###
 resource "google_pubsub_topic" "verify_email_topic" {
@@ -503,10 +500,6 @@ resource "google_compute_autoscaler" "autoscaler" {
       time_window_sec = var.autoscaler_time_window_sec
     }
   }
-}
-
-data "google_compute_instance_template" "instance_template" {
-  name = "dev-project-instance-template-1e23402d"
 }
 
 ### instance group manager ###
