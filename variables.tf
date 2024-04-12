@@ -140,18 +140,6 @@ variable "next_hop_gateway" {
   type = string
 }
 
-#variable "boot_disk_image" {
-#  type = string
-#}
-#
-#variable "boot_disk_type" {
-#  type = string
-#}
-#
-#variable "boot_disk_size" {
-#  type = number
-#}
-
 variable "ssh_public_key_path" {
   type    = string
   default = "~/.ssh/id_rsa.pub"
@@ -409,10 +397,6 @@ variable "cloud_function_send_email_verification_retry_policy" {
 variable "cloud_function_send_email_verification_api_key" {
   type = string
 }
-
-#variable "cloud_function_bucket_name" {
-#  type = string
-#}
 
 variable "cloud_function_bucket_location" {
   type = string
