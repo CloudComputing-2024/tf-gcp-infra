@@ -626,18 +626,34 @@ variable "gce-lb-http_target_tags" {
   type = list(string)
 }
 
-variable "key_ring_name" {
+variable "keyring_name_prefix" {
   type = string
 }
 
-variable "vm_cmek_name" {
+variable "key_byte_length" {
+  type = number
+}
+
+variable "vm_key_name_prefix" {
   type = string
 }
 
-variable "cloud_sqk_cmek_name" {
+variable "sql_key_name_prefix" {
   type = string
 }
 
-variable "cloud_storage_bucket_cmek_name" {
+variable "storage_key_name_prefix" {
+  type = string
+}
+
+variable "key_rotation_period" {
+  type = string
+}
+
+variable "cryptoKey_encrypter_decrypter_role" {
+  type = string
+}
+
+variable "cloudsql_service" {
   type = string
 }

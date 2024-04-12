@@ -123,6 +123,94 @@ resource "google_project_iam_binding" "instance_admin" {
   members = ["serviceAccount:${google_service_account.service_account.email}"]
 }
 
+resource "google_project_service_identity" "cloudsql_service_identity" {
+  provider = google-beta
+  project  = var.project_id
+  service  = var.cloudsql_service
+}
+
+resource "google_project_iam_binding" "cryptokey_encrypter_decrypter" {
+  project = var.project_id
+  role    = var.cryptoKey_encrypter_decrypter_role
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}",
+    "serviceAccount:service-${data.google_project.project.number}@compute-system.iam.gserviceaccount.com"
+  ]
+}
+
+### cloud key management ###
+resource "random_id" "keyring_name" {
+  byte_length = var.key_byte_length
+  prefix      = var.keyring_name_prefix
+}
+
+resource "random_id" "vm_key_name" {
+  byte_length = var.key_byte_length
+  prefix      = var.vm_key_name_prefix
+}
+
+resource "random_id" "sql_key_name" {
+  byte_length = var.key_byte_length
+  prefix      = var.sql_key_name_prefix
+}
+
+resource "random_id" "storage_key_name" {
+  byte_length = var.key_byte_length
+  prefix      = var.storage_key_name_prefix
+}
+
+resource "google_kms_key_ring" "key_ring" {
+  name     = random_id.keyring_name.hex
+  location = var.region
+}
+
+resource "google_kms_crypto_key" "vm_key" {
+  name            = random_id.vm_key_name.hex
+  key_ring        = google_kms_key_ring.key_ring.id
+  rotation_period = var.key_rotation_period
+}
+
+
+resource "google_kms_crypto_key" "sql_key" {
+  name            = random_id.sql_key_name.hex
+  key_ring        = google_kms_key_ring.key_ring.id
+  rotation_period = var.key_rotation_period
+}
+
+
+resource "google_kms_crypto_key" "storage_key" {
+  name            = random_id.storage_key_name.hex
+  key_ring        = google_kms_key_ring.key_ring.id
+  rotation_period = var.key_rotation_period
+}
+
+resource "google_kms_crypto_key_iam_binding" "vm_key_iam_binding" {
+  crypto_key_id = google_kms_crypto_key.vm_key.id
+  role          = var.cryptoKey_encrypter_decrypter_role
+
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}"
+  ]
+}
+
+resource "google_kms_crypto_key_iam_binding" "sql_key_iam_binding" {
+  crypto_key_id = google_kms_crypto_key.sql_key.id
+  role          = var.cryptoKey_encrypter_decrypter_role
+
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}",
+    "serviceAccount:${google_project_service_identity.cloudsql_service_identity.email}"
+  ]
+}
+
+resource "google_kms_crypto_key_iam_binding" "storage_key_iam_binding" {
+  crypto_key_id = google_kms_crypto_key.storage_key.id
+  role          = var.cryptoKey_encrypter_decrypter_role
+
+  members = [
+    "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
+  ]
+}
 
 ### cloud sql ###
 resource "google_compute_global_address" "private_ip_address" {
@@ -375,7 +463,6 @@ resource "google_compute_instance_template" "instance_template" {
   EOT
 }
 
-
 ### health check ###
 resource "google_compute_health_check" "healthcheck" {
   name                = var.healthcheck_name
@@ -416,6 +503,10 @@ resource "google_compute_autoscaler" "autoscaler" {
       time_window_sec = var.autoscaler_time_window_sec
     }
   }
+}
+
+data "google_compute_instance_template" "instance_template" {
+  name = "dev-project-instance-template-1e23402d"
 }
 
 ### instance group manager ###
@@ -498,94 +589,3 @@ module "gce-lb-http" {
   }
 }
 
-resource "random_id" "keyring_name" {
-  byte_length = 4
-  prefix      = "keyring-"
-}
-
-resource "random_id" "vm_key_name" {
-  byte_length = 4
-  prefix      = "vm-key-"
-}
-
-resource "random_id" "sql_key_name" {
-  byte_length = 4
-  prefix      = "sql-key-"
-}
-
-resource "random_id" "storage_key_name" {
-  byte_length = 4
-  prefix      = "storage-key-"
-}
-
-resource "google_kms_key_ring" "key_ring" {
-  name     = random_id.keyring_name.hex
-  location = var.region
-}
-
-resource "google_kms_crypto_key" "vm_key" {
-  name            = random_id.vm_key_name.hex
-  key_ring        = google_kms_key_ring.key_ring.id
-  rotation_period = "2592000s"
-}
-
-
-resource "google_kms_crypto_key" "sql_key" {
-  name            = random_id.sql_key_name.hex
-  key_ring        = google_kms_key_ring.key_ring.id
-  rotation_period = "2592000s"
-}
-
-
-resource "google_kms_crypto_key" "storage_key" {
-  name            = random_id.storage_key_name.hex
-  key_ring        = google_kms_key_ring.key_ring.id
-  rotation_period = "2592000s"
-}
-
-resource "google_kms_crypto_key_iam_binding" "vm_key_iam_binding" {
-  crypto_key_id = google_kms_crypto_key.vm_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-
-  members = [
-    "serviceAccount:${google_service_account.service_account.email}",
-    #    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
-    #    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
-  ]
-}
-
-resource "google_kms_crypto_key_iam_binding" "sql_key_iam_binding" {
-  crypto_key_id = google_kms_crypto_key.sql_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-
-  members = [
-    "serviceAccount:${google_service_account.service_account.email}",
-    "serviceAccount:${google_project_service_identity.cloudsql_service_identity.email}"
-  ]
-}
-
-resource "google_kms_crypto_key_iam_binding" "storage_key_iam_binding" {
-  crypto_key_id = google_kms_crypto_key.storage_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-
-  members = [
-    "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
-  ]
-}
-
-resource "google_project_service_identity" "cloudsql_service_identity" {
-  provider = google-beta
-  project  = var.project_id
-  service  = "sqladmin.googleapis.com"
-}
-
-resource "google_project_iam_binding" "cryptokey_encrypter_decrypter" {
-  project = var.project_id
-  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  members = [
-    "serviceAccount:${google_service_account.service_account.email}",
-    "serviceAccount:service-${data.google_project.project.number}@compute-system.iam.gserviceaccount.com",
-    #    "serviceAccount:${data.google_project.project.number}@cloudservices.gserviceaccount.com",
-    #    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-eventarc.iam.gserviceaccount.com"
-  ]
-}
