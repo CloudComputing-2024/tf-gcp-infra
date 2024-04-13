@@ -56,7 +56,7 @@ resource "google_compute_firewall" "allow_https" {
   source_ranges = var.allow_https_source_ranges
   target_tags   = var.allow_https_target_tags
 
-  allow {
+  deny {
     ports    = var.allow_https_ports
     protocol = var.allow_https_protocol
   }
@@ -101,7 +101,7 @@ resource "google_project_iam_binding" "cloud_sql_client" {
 resource "google_project_iam_binding" "load_balancer_admin" {
   project = var.project_id
   role    = var.load_balancer_admin
-  members = ["serviceAccount:${google_service_account.service_account.email}"]
+  members = ["serviceAccount:${google_service_account.service_account.email}", "serviceAccount:${var.packer_service_account}"]
 }
 
 resource "google_project_iam_binding" "network_admin" {
@@ -402,6 +402,10 @@ resource "google_storage_bucket" "cloud_function_bucket" {
   encryption {
     default_kms_key_name = google_kms_crypto_key.storage_key.id
   }
+
+  depends_on = [
+    google_kms_crypto_key_iam_binding.storage_key_iam_binding
+  ]
 }
 
 resource "google_storage_bucket_object" "cloud_function_archive" {
