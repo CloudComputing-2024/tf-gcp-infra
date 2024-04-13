@@ -145,6 +145,10 @@ variable "ssh_public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }
 
+variable "packer_service_account" {
+  type = string
+}
+
 variable "service_account_id" {
   type = string
 }

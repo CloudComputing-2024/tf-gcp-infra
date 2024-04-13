@@ -21,3 +21,11 @@ output "project_number" {
 output "key_ring" {
   value = google_kms_key_ring.key_ring
 }
+
+output "vm_key" {
+  value = google_kms_crypto_key.vm_key
+}
+
+output "cloud_sql_connnection" {
+  value = google_sql_database_instance.cloud_sql_instance.connection_name
+}
